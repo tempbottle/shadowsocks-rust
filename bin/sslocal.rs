@@ -63,6 +63,7 @@ fn main() {
 
 
         (@arg NO_DELAY: --("no-delay") !takes_value "Set TCP_NODELAY option for socket")
+        (@arg FAST_OPEN: --("fast-open") !takes_value "Enable TCP Fast Open (TFO)")
         (@arg NOFILE: -n --nofile +takes_value "Set RLIMIT_NOFILE with both soft and hard limit (only for *nix systems)")
         (@arg ACL: --acl +takes_value "Path to ACL (Access Control List)")
         (@arg DNS: --dns +takes_value "DNS nameservers, formatted like [(tcp|udp)://]host[:port][,host[:port]]..., or unix:///path/to/dns, or predefined keys like \"google\", \"cloudflare\"")
@@ -339,6 +340,10 @@ fn main() {
         config.no_delay = true;
     }
 
+    if matches.is_present("FAST_OPEN") {
+        config.fast_open = true;
+    }
+
     #[cfg(any(target_os = "linux", target_os = "android"))]
     if let Some(mark) = matches.value_of("OUTBOUND_FWMARK") {
         config.outbound_fwmark = Some(mark.parse::<u32>().expect("an unsigned integer for `outbound-fwmark`"));
@@ -346,7 +351,7 @@ fn main() {
 
     #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos", target_os = "ios"))]
     if let Some(iface) = matches.value_of("OUTBOUND_BIND_INTERFACE") {
-        config.outbound_bind_interface = Some(From::from(iface.to_owned()));
+        config.outbound_bind_interface = Some(iface.to_owned());
     }
 
     if let Some(nofile) = matches.value_of("NOFILE") {

@@ -51,6 +51,7 @@ fn main() {
         (@arg SERVER_HOST: -s --("server-host") +takes_value "Host name or IP address of your remote server")
 
         (@arg NO_DELAY: --("no-delay") !takes_value "Set TCP_NODELAY option for socket")
+        (@arg FAST_OPEN: --("fast-open") !takes_value "Enable TCP Fast Open (TFO)")
 
         (@arg MANAGER_ADDRESS: --("manager-address") +takes_value {validator::validate_manager_addr} "ShadowSocks Manager (ssmgr) address, could be ip:port, domain:port or /path/to/unix.sock")
         (@arg ENCRYPT_METHOD: -m --("encrypt-method") +takes_value possible_values(available_ciphers()) "Default encryption method")
@@ -143,14 +144,18 @@ fn main() {
         config.no_delay = true;
     }
 
+    if matches.is_present("FAST_OPEN") {
+        config.fast_open = true;
+    }
+
     #[cfg(any(target_os = "linux", target_os = "android"))]
     if let Some(mark) = matches.value_of("OUTBOUND_FWMARK") {
         config.outbound_fwmark = Some(mark.parse::<u32>().expect("an unsigned integer for `outbound-fwmark`"));
     }
 
-    #[cfg(any(target_os = "linux", target_os = "android"))]
+    #[cfg(any(target_os = "linux", target_os = "android", target_os = "macos", target_os = "ios"))]
     if let Some(iface) = matches.value_of("OUTBOUND_BIND_INTERFACE") {
-        config.outbound_bind_interface = Some(From::from(iface.to_owned()));
+        config.outbound_bind_interface = Some(iface.to_owned());
     }
 
     if let Some(m) = matches.value_of("MANAGER_ADDRESS") {
